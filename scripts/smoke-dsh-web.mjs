@@ -50,7 +50,7 @@ const args = ['web', '--no-open', '--host', '127.0.0.1', '--port', '0']
 
 let stdout = ''
 let stderr = ''
-const child = spawn(process.execPath, [entry, ...args], {
+const child = spawn(process.execPath, ['--expose-internals', entry, ...args], {
   cwd: home,
   env: {
     ...process.env,

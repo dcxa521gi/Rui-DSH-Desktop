@@ -50,6 +50,8 @@ jobs:
         run: npm ci
       - name: Smoke
         run: npm run smoke
+      - name: Build
+        run: npm run build
       - name: Package
         run: npx electron-builder ${{ matrix.args }} --publish never
       - name: Upload artifacts
