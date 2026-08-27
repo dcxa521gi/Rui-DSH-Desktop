@@ -23,7 +23,6 @@ export function createMainWindow(): BrowserWindow {
     backgroundColor: chromeBackground(),
     title: 'Rui DSH Desktop',
     titleBarStyle: 'hidden',
-    movable: true,
     ...(process.platform === 'win32' ? { titleBarOverlay: overlayOptions() } : {}),
     webPreferences: {
       preload: PRELOAD_PATH,

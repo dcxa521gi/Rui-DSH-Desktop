@@ -578,9 +578,15 @@ function clientInject(): void {
     })
   }
 
+  let mountScheduled = false
   const observer = new MutationObserver(() => {
-    const dialog = dialogRoot()
-    if (dialog !== null) mount(dialog)
+    if (mountScheduled) return
+    mountScheduled = true
+    window.setTimeout(() => {
+      mountScheduled = false
+      const dialog = dialogRoot()
+      if (dialog !== null) mount(dialog)
+    }, 200)
   })
   observer.observe(document.documentElement, { childList: true, subtree: true })
   const existing = dialogRoot()

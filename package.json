@@ -1,7 +1,7 @@
 {
   "name": "rui-dsh-desktop",
   "productName": "Rui DSH Desktop",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Unofficial desktop shell for DeepSeek Harness. Double-click to run the official web UI without installing Node.js.",
   "license": "MIT",
   "author": "Rui",

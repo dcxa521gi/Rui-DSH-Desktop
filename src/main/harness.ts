@@ -197,6 +197,9 @@ export class HarnessServer {
       [NODE_MODE_ENV]: '1',
       ELECTRON_NO_ATTACH_CONSOLE: '1',
       PATH: `${shimDir}${pathSep}${process.env.PATH ?? ''}`,
+      TEMP: process.env.TEMP,
+      TMP: process.env.TMP,
+      TMPDIR: process.env.TMPDIR,
     }
     if (modulesDir !== undefined) {
       env.NODE_PATH = [modulesDir, process.env.NODE_PATH].filter(Boolean).join(pathSep)

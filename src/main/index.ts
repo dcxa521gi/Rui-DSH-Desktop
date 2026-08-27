@@ -8,6 +8,7 @@ import {
   type OpenDialogOptions,
   type OpenDialogReturnValue,
 } from 'electron'
+import { mkdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { deleteJob, initAutomation, listJobs, saveJob, toggleJob } from './automation.js'
@@ -57,6 +58,17 @@ import { importSessions, initSessionImport, listImportableSessions } from './ses
 import { ERROR_PAGE, LOADING_PAGE, createMainWindow, createSettingsWindow } from './window.js'
 
 const APP_NAME = 'Rui DSH Desktop'
+
+function redirectTemp(): string {
+  const dir = join(homedir(), 'AppData', 'Local', 'Temp')
+  mkdirSync(dir, { recursive: true })
+  process.env.TEMP = dir
+  process.env.TMP = dir
+  process.env.TMPDIR = dir
+  return dir
+}
+
+const userTemp = redirectTemp()
 
 let mainWindow: BrowserWindow | undefined
 let settingsWindow: BrowserWindow | undefined
@@ -433,6 +445,11 @@ if (!app.requestSingleInstanceLock()) {
 
   void app.whenReady().then(async () => {
     app.setAppUserModelId('dev.rui.dsh-desktop')
+    try {
+      app.setPath('temp', userTemp)
+    } catch {
+      // Path may already be locked on some Windows builds.
+    }
     initLogs(logsDir())
     initDesktopSettings(app.getPath('userData'), resolveBundledDshVersion())
     restoreTheme()

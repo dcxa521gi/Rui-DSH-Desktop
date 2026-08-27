@@ -102,9 +102,15 @@ function clientInject(
   ensureChip()
   if (w.__ruiVersionHook === true) return
   w.__ruiVersionHook = true
+  let scheduled = false
   new MutationObserver(() => {
-    ensureChip()
-  }).observe(document.documentElement, { childList: true, subtree: true })
+    if (scheduled) return
+    scheduled = true
+    window.setTimeout(() => {
+      scheduled = false
+      ensureChip()
+    }, 300)
+  }).observe(document.body ?? document.documentElement, { childList: true, subtree: true })
   w.desktop?.onAppUpdate((payload) => {
     applyUpdate(payload)
   })

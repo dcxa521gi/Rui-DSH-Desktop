@@ -75,21 +75,39 @@ export function injectThemeControl(win: BrowserWindow): void {
 function clientInject(preference: 'system' | 'light' | 'dark', dark: boolean): void {
   const id = 'rui-dsh-theme-toggle'
   const dragId = 'rui-dsh-drag'
+  const styleId = 'rui-dsh-drag-style'
   const existing = document.getElementById(id)
   if (existing !== null) existing.remove()
-  const dragCss = (left: number) =>
-    [
-      'position:fixed',
-      'top:0',
-      `left:${String(left)}px`,
-      'right:176px',
-      'height:36px',
-      'z-index:2147483645',
-      '-webkit-app-region:drag',
-      'app-region:drag',
-      'pointer-events:auto',
-      'background:rgba(0,0,0,0.001)',
-    ].join(';')
+
+  if (document.getElementById(styleId) === null) {
+    const style = document.createElement('style')
+    style.id = styleId
+    style.textContent = `
+html, body { -webkit-app-region: no-drag; app-region: no-drag; }
+#${dragId} {
+  position: fixed !important;
+  top: 0 !important;
+  right: 138px !important;
+  bottom: auto !important;
+  left: var(--rui-drag-left, 0px) !important;
+  inset: 0 138px auto var(--rui-drag-left, 0px) !important;
+  width: auto !important;
+  height: 36px !important;
+  max-height: 36px !important;
+  min-height: 36px !important;
+  z-index: 3 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  pointer-events: auto;
+  -webkit-app-region: drag !important;
+  app-region: drag !important;
+}`
+    document.head.appendChild(style)
+  }
+
   const sidebarLeft = (): number => {
     const session = document.querySelector('button[class*="_newSession"]')
     const sidebar = session instanceof HTMLElement ? session.closest('[class*="_root"]') : null
@@ -97,22 +115,18 @@ function clientInject(preference: 'system' | 'light' | 'dark', dark: boolean): v
     return Math.max(0, Math.round(sidebar.getBoundingClientRect().width))
   }
   const placeDrag = (): void => {
-    let drag = document.getElementById(dragId)
-    if (drag === null) {
-      drag = document.createElement('div')
-      drag.id = dragId
-      document.documentElement.appendChild(drag)
-    }
-    drag.style.cssText = dragCss(sidebarLeft())
+    document.documentElement.style.setProperty('--rui-drag-left', `${String(sidebarLeft())}px`)
+    if (document.getElementById(dragId) !== null) return
+    const drag = document.createElement('div')
+    drag.id = dragId
+    document.documentElement.appendChild(drag)
   }
   placeDrag()
   const w = window as unknown as { __ruiDragWatch?: boolean }
   if (w.__ruiDragWatch !== true) {
     w.__ruiDragWatch = true
     window.addEventListener('resize', placeDrag)
-    new MutationObserver(() => {
-      placeDrag()
-    }).observe(document.documentElement, { childList: true, subtree: true })
+    window.setInterval(placeDrag, 1000)
   }
   const next =
     preference === 'system' ? 'light' : preference === 'light' ? 'dark' : 'system'
@@ -135,7 +149,7 @@ function clientInject(preference: 'system' | 'light' | 'dark', dark: boolean): v
     'position:fixed',
     'top:0',
     'right:138px',
-    'z-index:2147483646',
+    'z-index:4',
     'height:36px',
     'display:flex',
     'align-items:center',

@@ -414,8 +414,14 @@ function clientInject(): void {
     void renderIm()
   })
 
+  let mountScheduled = false
   const observer = new MutationObserver(() => {
-    mount()
+    if (mountScheduled) return
+    mountScheduled = true
+    window.setTimeout(() => {
+      mountScheduled = false
+      mount()
+    }, 200)
   })
   observer.observe(document.documentElement, { childList: true, subtree: true })
   mount()
