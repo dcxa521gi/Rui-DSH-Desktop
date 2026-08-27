@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>设置 · Rui DSH Desktop</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10141c;
+      --ink: #e8ecf1;
+      --muted: #8b95a3;
+      --accent: #5ee0b5;
+      --line: #222a36;
+      --panel: #171d27;
+      --danger: #ff8a7a;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+    body { padding: 1.5rem 1.4rem 2rem; }
+    h1 { font-size: 1.15rem; font-weight: 600; margin: 0 0 0.25rem; }
+    .lead { color: var(--muted); margin: 0 0 1.4rem; font-size: 0.88rem; line-height: 1.5; }
+    section {
+      border: 1px solid var(--line);
+      border-radius: 0.7rem;
+      padding: 1rem 1.05rem 1.1rem;
+      margin-bottom: 0.9rem;
+      background: var(--panel);
+    }
+    section h2 { font-size: 0.92rem; margin: 0 0 0.35rem; }
+    .hint { color: var(--muted); font-size: 0.8rem; line-height: 1.5; margin: 0 0 0.8rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.45rem 0; }
+    label.inline { display: flex; align-items: center; gap: 0.45rem; font-size: 0.86rem; }
+    input[type="text"] {
+      background: #0b0f16;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 0.4rem;
+      padding: 0.4rem 0.55rem;
+      min-width: 10rem;
+      font: inherit;
+    }
+    button {
+      appearance: none;
+      border: 1px solid #2a3340;
+      background: #121821;
+      color: var(--ink);
+      border-radius: 0.4rem;
+      padding: 0.42rem 0.75rem;
+      cursor: pointer;
+      font: inherit;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #102018;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    button:disabled {
+      opacity: 1;
+      cursor: default;
+      color: #d5dbe3;
+      background: #243044;
+      border-color: #4a5568;
+    }
+    button.primary:disabled {
+      background: #1f4a3c;
+      color: #e3f8ee;
+      border-color: #3d7a62;
+    }
+    .status { font-size: 0.8rem; color: var(--muted); white-space: pre-wrap; line-height: 1.45; margin-top: 0.45rem; }
+    .status.ok { color: var(--accent); }
+    .status.err { color: var(--danger); }
+    .seg { display: flex; gap: 0.35rem; }
+    .seg button[aria-pressed="true"] {
+      background: var(--accent);
+      color: #102018;
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <h1>Rui Desktop</h1>
+  <p class="lead">客户端更新、内核更新与外观。会话数据仍在官方目录，不会随这里的操作搬家。</p>
+
+  <section>
+    <h2>外观</h2>
+    <p class="hint">默认跟随系统。标题栏右侧图标可循环切换系统 / 浅色 / 深色。官方界面请保持「跟随系统」，以便与窗口同步。</p>
+    <div class="seg" id="theme">
+      <button type="button" data-theme="system">系统</button>
+      <button type="button" data-theme="light">浅色</button>
+      <button type="button" data-theme="dark">深色</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>检测客户端更新</h2>
+    <p class="hint">默认自动检测 GitHub Release。发现新版本后「更新客户端」才会可点，打开下载页安装。</p>
+    <label class="inline"><input type="checkbox" id="autoCheck" /> 启动时自动检测</label>
+    <div class="row">
+      <input id="owner" type="text" placeholder="GitHub owner" />
+      <input id="repo" type="text" placeholder="GitHub repo" />
+      <button type="button" id="saveRepo">保存仓库</button>
+      <button type="button" id="checkApp">检测客户端</button>
+      <button type="button" class="primary" id="updateApp" disabled>更新客户端</button>
+    </div>
+    <div class="status" id="appStatus"></div>
+  </section>
+
+  <section>
+    <h2>检测内核更新</h2>
+    <p class="hint">仅手动检测。下载完整且校验通过后，「更新内核」才会可点。失败或不完整不会启用更新。更新内核不必重装客户端。</p>
+    <div class="row">
+      <button type="button" id="checkKernel">检测内核</button>
+      <button type="button" id="downloadKernel" disabled>下载内核</button>
+      <button type="button" class="primary" id="applyKernel" disabled>更新内核</button>
+      <button type="button" id="revertKernel">恢复内置内核</button>
+    </div>
+    <div class="status" id="kernelStatus"></div>
+  </section>
+
+  <script>
+    const desktop = window.desktop
+    const appStatus = document.getElementById('appStatus')
+    const kernelStatus = document.getElementById('kernelStatus')
+    const downloadBtn = document.getElementById('downloadKernel')
+    const applyBtn = document.getElementById('applyKernel')
+    const updateAppBtn = document.getElementById('updateApp')
+    let appReleaseUrl = undefined
+
+    function setThemeButtons(theme) {
+      for (const button of document.querySelectorAll('#theme [data-theme]')) {
+        button.setAttribute('aria-pressed', button.getAttribute('data-theme') === theme ? 'true' : 'false')
+      }
+    }
+
+    function showKernel(check) {
+      const pending = check.pending ? `已验证待更新：${check.pending.version}` : '没有已验证的待更新内核'
+      kernelStatus.className = 'status'
+      kernelStatus.textContent =
+        `当前 ${check.current}（${check.source === 'installed' ? '已切换' : '内置'}）\n` +
+        `npm latest ${check.latest}\n${pending}`
+      downloadBtn.disabled = !check.updateAvailable
+      applyBtn.disabled = !check.pending
+    }
+
+    async function refresh() {
+      if (!desktop) {
+        appStatus.textContent = '无法连接桌面桥接'
+        appStatus.className = 'status err'
+        return
+      }
+      const state = await desktop.getDesktopState()
+      document.getElementById('autoCheck').checked = state.autoCheckApp
+      document.getElementById('owner').value = state.githubOwner
+      document.getElementById('repo').value = state.githubRepo
+      setThemeButtons(state.theme)
+      appStatus.textContent = `客户端 ${state.appVersion}`
+      kernelStatus.textContent =
+        `当前内核 ${state.dshVersion}（${state.engine.source === 'installed' ? '已切换' : '内置'}）`
+      if (state.engine.pending) {
+        applyBtn.disabled = false
+        kernelStatus.textContent += `\n已验证待更新：${state.engine.pending.version}`
+      }
+    }
+
+    document.getElementById('theme').onclick = (event) => {
+      const theme = event.target.getAttribute('data-theme')
+      if (!theme || !desktop) return
+      desktop.setTheme(theme).then(setThemeButtons)
+    }
+    document.getElementById('autoCheck').onchange = (event) => {
+      desktop?.setAutoCheckApp(event.target.checked)
+    }
+    document.getElementById('saveRepo').onclick = async () => {
+      await desktop?.setGithubRepo(document.getElementById('owner').value, document.getElementById('repo').value)
+      appStatus.textContent = '仓库已保存'
+      appStatus.className = 'status ok'
+    }
+    document.getElementById('checkApp').onclick = async () => {
+      appStatus.textContent = '正在检测…'
+      appStatus.className = 'status'
+      try {
+        const result = await desktop.checkAppUpdate()
+        appReleaseUrl = result.url
+        updateAppBtn.disabled = !result.updateAvailable
+        appStatus.className = result.updateAvailable ? 'status ok' : 'status'
+        appStatus.textContent = result.message
+      } catch (error) {
+        appStatus.className = 'status err'
+        appStatus.textContent = String(error)
+      }
+    }
+    document.getElementById('updateApp').onclick = async () => {
+      await desktop?.openAppRelease(appReleaseUrl)
+    }
+    document.getElementById('checkKernel').onclick = async () => {
+      kernelStatus.textContent = '正在检测…'
+      kernelStatus.className = 'status'
+      try {
+        showKernel(await desktop.checkKernelUpdate())
+      } catch (error) {
+        kernelStatus.className = 'status err'
+        kernelStatus.textContent = String(error)
+        downloadBtn.disabled = true
+        applyBtn.disabled = true
+      }
+    }
+    document.getElementById('downloadKernel').onclick = async () => {
+      downloadBtn.disabled = true
+      kernelStatus.className = 'status'
+      try {
+        const check = await desktop.downloadKernel()
+        showKernel(check)
+        kernelStatus.className = 'status ok'
+      } catch (error) {
+        kernelStatus.className = 'status err'
+        kernelStatus.textContent = String(error)
+        applyBtn.disabled = true
+      } finally {
+        downloadBtn.disabled = false
+      }
+    }
+    document.getElementById('applyKernel').onclick = async () => {
+      kernelStatus.textContent = '正在切换内核并重启引擎…'
+      await desktop.applyKernel()
+      await refresh()
+    }
+    document.getElementById('revertKernel').onclick = async () => {
+      await desktop.revertKernel()
+      await refresh()
+    }
+    desktop?.onKernelProgress((payload) => {
+      kernelStatus.className = payload.phase === 'error' ? 'status err' : 'status'
+      kernelStatus.textContent = payload.message
+    })
+    refresh().catch((error) => {
+      appStatus.className = 'status err'
+      appStatus.textContent = String(error)
+    })
+  </script>
+</body>
+</html>

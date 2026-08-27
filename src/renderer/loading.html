@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rui DSH Desktop</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10141c;
+      --ink: #e8ecf1;
+      --muted: #8b95a3;
+      --accent: #5ee0b5;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+    body {
+      display: grid;
+      place-items: center;
+      letter-spacing: 0.01em;
+    }
+    html, body {
+      -webkit-app-region: drag;
+      app-region: drag;
+    }
+    .rui-drag {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 176px;
+      height: 36px;
+      -webkit-app-region: drag;
+      app-region: drag;
+    }
+    main {
+      width: min(28rem, calc(100% - 3rem));
+      text-align: left;
+      -webkit-app-region: no-drag;
+      app-region: no-drag;
+    }
+    .mark {
+      width: 2.5rem;
+      height: 2.5rem;
+      border: 2px solid var(--accent);
+      border-radius: 0.55rem;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 0 0 0.4rem;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .bar {
+      margin: 1.75rem 0 1rem;
+      height: 2px;
+      background: #1c2430;
+      overflow: hidden;
+      border-radius: 99px;
+    }
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 40%;
+      background: var(--accent);
+      animation: slide 1.2s ease-in-out infinite;
+    }
+    @keyframes slide {
+      0% { transform: translateX(-120%); }
+      100% { transform: translateX(340%); }
+    }
+    .meta {
+      font-size: 0.78rem;
+      color: #66707d;
+    }
+  </style>
+</head>
+<body>
+  <div class="rui-drag"></div>
+  <main>
+    <div class="mark">R</div>
+    <h1>正在启动引擎</h1>
+    <p>Rui DSH Desktop 正在拉起嵌入的 DeepSeek Harness Web UI。首次启动可能需要一会儿。</p>
+    <div class="bar"><span></span></div>
+    <p class="meta" id="meta">Unofficial desktop shell · not affiliated with DeepSeek</p>
+  </main>
+  <script>
+    const desktop = window.desktop
+    if (desktop) {
+      desktop.getInfo().then((info) => {
+        document.getElementById('meta').textContent =
+          `App ${info.appVersion} · @deepseek-ai/dsh ${info.dshVersion}`
+      }).catch(() => {})
+    }
+  </script>
+</body>
+</html>

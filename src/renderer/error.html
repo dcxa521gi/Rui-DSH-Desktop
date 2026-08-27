@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>启动失败 · Rui DSH Desktop</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10141c;
+      --ink: #e8ecf1;
+      --muted: #8b95a3;
+      --accent: #5ee0b5;
+      --danger: #ff8a7a;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "PingFang SC", "Noto Sans SC", sans-serif;
+    }
+    body { padding: 3rem 1.5rem; }
+    html, body {
+      -webkit-app-region: drag;
+      app-region: drag;
+    }
+    .rui-drag {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 176px;
+      height: 36px;
+      -webkit-app-region: drag;
+      app-region: drag;
+    }
+    main {
+      width: min(44rem, 100%);
+      margin: 0 auto;
+      -webkit-app-region: no-drag;
+      app-region: no-drag;
+    }
+    h1 { font-size: 1.4rem; font-weight: 600; margin: 0 0 0.5rem; }
+    .lead { color: var(--muted); line-height: 1.6; margin: 0 0 1.25rem; }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0b0f16;
+      border: 1px solid #222a36;
+      border-radius: 0.6rem;
+      padding: 1rem;
+      color: var(--danger);
+      font-size: 0.82rem;
+      max-height: 14rem;
+      overflow: auto;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1.25rem 0; }
+    button {
+      appearance: none;
+      border: 1px solid #2a3340;
+      background: #171d27;
+      color: var(--ink);
+      border-radius: 0.45rem;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      font: inherit;
+      -webkit-app-region: no-drag;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #102018;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .meta { color: #66707d; font-size: 0.8rem; line-height: 1.5; }
+<body>
+  <div class="rui-drag"></div>
+  <main>
+    <h1>引擎没有就绪</h1>
+    <p class="lead">嵌入的 <code>@deepseek-ai/dsh web</code> 启动失败。可以复制错误、打开日志后重试。</p>
+    <pre id="error">正在读取详情… 若长时间不变，请点「打开日志」查看 main.log 和 dsh-web.log。</pre>
+    <div class="row">
+      <button class="primary" id="retry">重试</button>
+      <button id="copy">复制错误</button>
+      <button id="logs">打开日志</button>
+      <button id="data">打开数据目录</button>
+      <button id="quit">退出</button>
+    </div>
+    <p class="meta" id="meta"></p>
+  </main>
+  <script>
+    const desktop = window.desktop
+    const params = new URLSearchParams(location.search)
+    const queued = params.get('message')
+    const errorEl = document.getElementById('error')
+    if (queued) errorEl.textContent = queued
+    async function refresh() {
+      if (!desktop) return
+      const info = await Promise.race([
+        desktop.getInfo(),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('读取应用信息超时')), 3000)
+        }),
+      ])
+      const error = queued || info.error || info.harnessLogTail
+      if (error) errorEl.textContent = error
+      document.getElementById('meta').textContent =
+        `App ${info.appVersion} · dsh ${info.dshVersion} · data ${info.dshHome}\nlogs ${info.logPath}`
+    }
+    refresh().catch((err) => {
+      if (!queued) errorEl.textContent = String(err)
+    })
+    document.getElementById('retry').onclick = () => desktop?.restartHarness()
+    document.getElementById('copy').onclick = () => desktop?.copyError()
+    document.getElementById('logs').onclick = () => desktop?.openLogs()
+    document.getElementById('data').onclick = () => desktop?.openDataDir()
+    document.getElementById('quit').onclick = () => desktop?.quit()
+  </script>
+</body>
+</html>

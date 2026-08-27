@@ -1,0 +1,61 @@
+appId: dev.rui.dsh-desktop
+productName: Rui DSH Desktop
+copyright: Copyright © 2026 Rui
+asar: false
+npmRebuild: false
+afterPack: scripts/after-pack.cjs
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**/*
+  - resources/**/*
+  - package.json
+  - from: node_modules/@deepseek-ai
+    to: node_modules/@deepseek-ai
+  - from: node_modules/@koromix
+    to: node_modules/@koromix
+  - from: node_modules/pnpm
+    to: node_modules/pnpm
+  - from: node_modules/koffi
+    to: node_modules/koffi
+  - from: node_modules/node-pty
+    to: node_modules/node-pty
+  - from: node_modules/qrcode-generator
+    to: node_modules/qrcode-generator
+  - "!**/*.map"
+extraMetadata:
+  main: out/main/index.js
+  repository:
+    type: git
+    url: https://github.com/dcxa521gi/Rui-DSH-Desktop.git
+win:
+  icon: resources/icon.png
+  signAndEditExecutable: false
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Rui DSH Desktop
+  include: installer.nsh
+mac:
+  icon: resources/icon.png
+  category: public.app-category.developer-tools
+  identity: null
+  target:
+    - target: dmg
+      arch: [arm64]
+    - target: zip
+      arch: [arm64]
+dmg:
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+extraResources:
+  - from: resources/icon.png
+    to: icon.png
+publish: []
